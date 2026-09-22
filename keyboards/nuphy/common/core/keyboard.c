@@ -7,10 +7,18 @@
 #include "mcu_pwr.h"
 #include "keys.h"
 #include "keyboard.h"
+#include "usjis.h"
 
 __attribute((weak)) extern void side_led_show(void) {}
 __attribute((weak)) extern void rgb_test_show(void) {}
 
+// matrix position of the Caps Lock key, for the under-key indicator
+#ifndef CAPS_LOCK_ROW
+#    define CAPS_LOCK_ROW 3
+#endif
+#ifndef CAPS_LOCK_COL
+#    define CAPS_LOCK_COL 0
+#endif
 #ifndef NUPHY_OS_SWITCH_HIGH_IS_WIN
 #    define NUPHY_OS_SWITCH_HIGH_IS_WIN 0
 #endif
@@ -27,6 +35,7 @@ bool f_sleep_show            = 0;
 bool f_dial_sw_init_ok       = 0;
 bool f_usb_sleep_show        = 0;
 bool f_deep_sleep_show       = 0;
+bool f_usjis_show            = 0;
 bool f_rf_sw_press           = 0;
 bool f_dev_reset_press       = 0;
 bool f_rgb_test_press        = 0;
@@ -340,11 +349,20 @@ void suspend_wakeup_init_kb(void) {
 
  * @brief  show sleep indicator
  */
+/**
+ * @brief  Where the OS-switch and sleep-toggle notices blink. Defaults to the
+ *         shared indicator; boards with two strips can send them elsewhere.
+ */
+__attribute__((weak)) void set_notice_on_side(uint8_t r, uint8_t g, uint8_t b) {
+    set_indicator_on_side(r, g, b);
+}
+
 void sleep_indicator_show(void) {
     static uint32_t sleep_show_timer     = 0;
     static bool     sleep_show_flag      = false;
     static bool     usb_sleep_show_flag  = false;
     static bool     deep_sleep_show_flag = false;
+    static bool     usjis_show_flag      = false;
 
     uint8_t r_temp, g_temp, b_temp;
 
@@ -361,12 +379,21 @@ void sleep_indicator_show(void) {
         usb_sleep_show_flag  = true;
         sleep_show_flag      = false;
         deep_sleep_show_flag = false;
+        usjis_show_flag      = false;
     } else if (f_deep_sleep_show) {
         f_deep_sleep_show    = false;
         sleep_show_timer     = timer_read32();
         usb_sleep_show_flag  = false;
         sleep_show_flag      = false;
         deep_sleep_show_flag = true;
+        usjis_show_flag      = false;
+    } else if (f_usjis_show) {
+        f_usjis_show         = false;
+        sleep_show_timer     = timer_read32();
+        usb_sleep_show_flag  = false;
+        sleep_show_flag      = false;
+        deep_sleep_show_flag = false;
+        usjis_show_flag      = true;
     }
 
     if (sleep_show_flag) {
@@ -380,9 +407,9 @@ void sleep_indicator_show(void) {
             b_temp = 0x00;
         }
         if ((timer_elapsed32(sleep_show_timer) / 500) % 2 == 0) {
-            set_indicator_on_side(r_temp, g_temp, b_temp);
+            set_notice_on_side(r_temp, g_temp, b_temp);
         } else {
-            set_indicator_on_side(0x00, 0x00, 0x00);
+            set_notice_on_side(0x00, 0x00, 0x00);
         }
         if (timer_elapsed32(sleep_show_timer) >= (3000 - 50)) {
             sleep_show_flag = false;
@@ -398,9 +425,9 @@ void sleep_indicator_show(void) {
             b_temp = 0x00;
         }
         if ((timer_elapsed32(sleep_show_timer) / 500) % 2 == 0) {
-            set_indicator_on_side(r_temp, g_temp, b_temp);
+            set_notice_on_side(r_temp, g_temp, b_temp);
         } else {
-            set_indicator_on_side(0x00, 0x00, 0x00);
+            set_notice_on_side(0x00, 0x00, 0x00);
         }
         if (timer_elapsed32(sleep_show_timer) >= (3000 - 50)) {
             usb_sleep_show_flag = false;
@@ -416,12 +443,30 @@ void sleep_indicator_show(void) {
             b_temp = 0x00;
         }
         if ((timer_elapsed32(sleep_show_timer) / 500) % 2 == 0) {
-            set_indicator_on_side(r_temp, g_temp, b_temp);
+            set_notice_on_side(r_temp, g_temp, b_temp);
         } else {
-            set_indicator_on_side(0x00, 0x00, 0x00);
+            set_notice_on_side(0x00, 0x00, 0x00);
         }
         if (timer_elapsed32(sleep_show_timer) >= (3000 - 50)) {
             deep_sleep_show_flag = false;
+        }
+    } else if (usjis_show_flag) {
+        if (usjis_is_enabled()) {
+            r_temp = 0x00;
+            g_temp = 0x80;
+            b_temp = 0x00;
+        } else {
+            r_temp = 0x80;
+            g_temp = 0x00;
+            b_temp = 0x00;
+        }
+        if ((timer_elapsed32(sleep_show_timer) / 500) % 2 == 0) {
+            set_notice_on_side(r_temp, g_temp, b_temp);
+        } else {
+            set_notice_on_side(0x00, 0x00, 0x00);
+        }
+        if (timer_elapsed32(sleep_show_timer) >= (3000 - 50)) {
+            usjis_show_flag = false;
         }
     }
 }
@@ -451,9 +496,9 @@ __attribute__((weak)) void os_mode_led_show(void) {
             b_temp = 0x80;
         }
         if ((timer_elapsed32(sys_show_timer) / 500) % 2 == 0) {
-            set_indicator_on_side(r_temp, g_temp, b_temp);
+            set_notice_on_side(r_temp, g_temp, b_temp);
         } else {
-            set_indicator_on_side(0x00, 0x00, 0x00);
+            set_notice_on_side(0x00, 0x00, 0x00);
         }
         if (timer_elapsed32(sys_show_timer) >= (3000 - 50)) {
 #if (WORK_MODE == USB_MODE)
@@ -540,7 +585,7 @@ bool rgb_matrix_indicators_nuphy(void) {
 #ifdef WS2812_SIDE_REFRESH
     static uint32_t side_refresh_time = 0;
 #endif
-    uint8_t caps_key_led_idx = get_led_index(3, 0);
+    uint8_t caps_key_led_idx = get_led_index(CAPS_LOCK_ROW, CAPS_LOCK_COL);
     bool    showCapsLock     = false;
 
     if (dev_info.link_mode == LINK_USB) {

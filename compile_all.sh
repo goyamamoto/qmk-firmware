@@ -16,7 +16,7 @@ fi
 TARGET_TAG=${TAG//\//-}
 VERSION_TOKEN=$TAG
 
-read -r -a keyboard_list <<<"${KEYBOARDS:-air75v2 halo75v2 halo96v2 gem80}"
+read -r -a keyboard_list <<<"${KEYBOARDS:-air60v2 air75v2 halo75v2 halo96v2 gem80}"
 read -r -a layout_list <<<"${LAYOUTS:-ansi iso}"
 read -r -a keymap_list <<<"${KEYMAPS:-default via srgb ryodeushii}"
 
@@ -106,7 +106,7 @@ rm -f "$FAILED_FILE"
 mapfile -t targets < <(discover_targets)
 
 if [[ ${#targets[@]} -eq 0 ]]; then
-  printf 'No matching build targets found for KEYBOARDS=%s LAYOUTS=%s KEYMAPS=%s\n' "${KEYBOARDS:-air75v2 halo75v2 halo96v2 gem80}" "${LAYOUTS:-ansi iso}" "${KEYMAPS:-default via srgb ryodeushii}" >&2
+  printf 'No matching build targets found for KEYBOARDS=%s LAYOUTS=%s KEYMAPS=%s\n' "${KEYBOARDS:-air60v2 air75v2 halo75v2 halo96v2 gem80}" "${LAYOUTS:-ansi iso}" "${KEYMAPS:-default via srgb ryodeushii}" >&2
   exit 1
 fi
 

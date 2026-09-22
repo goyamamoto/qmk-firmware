@@ -1,0 +1,34 @@
+mach create "air60v2"
+machine LoadPlatformDescription $ORIGIN/air60v2.gen.repl
+machine LoadPlatformDescriptionFromString "led1: Mocks.DummyI2CSlave @ i2c1 0x50"
+machine LoadPlatformDescriptionFromString "led2: Mocks.DummyI2CSlave @ i2c1 0x53"
+sysbus LoadBinary $ORIGIN/ff.bin 0x08000000
+sysbus.cpu PerformanceInMips 10
+sysbus LoadELF $ORIGIN/../../../../../.build/nuphy_air60v2_ansi_renode.elf
+logLevel 1
+logLevel -1 sysbus.i2c1.led1
+logLevel -1 sysbus.i2c1.led2
+sysbus.usart1 CreateFileBackend $ORIGIN/uart_tx.bin true
+sysbus.cpu AddHook 0x08005c24 "self.InfoLog('HOOK keyboard_init')"
+sysbus.cpu AddHook 0x080027f0 "self.InfoLog('HOOK keyboard_post_init_nuphy')"
+sysbus.cpu AddHook 0x08006468 "self.InfoLog('HOOK matrix_init')"
+sysbus.cpu AddHook 0x08009604 "self.InfoLog('HOOK rgb_matrix_init')"
+sysbus.cpu AddHook 0x08004010 "self.InfoLog('HOOK is31fl3733_init')"
+sysbus.cpu AddHook 0x08001398 "self.InfoLog('HOOK nuphy_rf_transport_init')"
+sysbus.cpu AddHook 0x080013a0 "self.InfoLog('HOOK nuphy_rf_device_init')"
+sysbus.cpu AddHook 0x08000db8 "self.InfoLog('HOOK uart_send_cmd')"
+sysbus.cpu AddHook 0x080027cc "self.InfoLog('HOOK housekeeping_task_nuphy')"
+sysbus.cpu AddHook 0x0800b5b4 "self.InfoLog('HOOK chSysHalt')"
+sysbus.cpu AddHook 0x08000196 "self.InfoLog('HOOK _unhandled_exception')"
+sysbus.cpu AddHook 0x08005b78 "self.InfoLog('HOOK eeconfig_init')"
+sysbus.cpu AddHook 0x0800a7b0 "self.InfoLog('HOOK i2c_init')"
+sysbus.cpu AddHook 0x08009480 "self.InfoLog('HOOK rgb_matrix_task')"
+sysbus.cpu AddHook 0x08006494 "self.InfoLog('HOOK matrix_scan')"
+sysbus.cpu AddHook 0x08000b18 "self.InfoLog('HOOK uart_send_report')"
+emulation RunFor "0.05"
+include $ORIGIN/gpio_pullups.resc
+emulation RunFor "3.0"
+sysbus.cpu PC
+sysbus FindSymbolAt `sysbus.cpu PC`
+sysbus.cpu ExecutedInstructions
+quit

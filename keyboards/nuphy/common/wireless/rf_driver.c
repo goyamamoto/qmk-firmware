@@ -64,10 +64,13 @@ static report_buffer_t make_report_buffer(uint8_t cmd, uint8_t *buff, uint8_t le
 /**
  * @brief Uart auto nkey send
  */
+// The bit report carries key codes 0x00-0x77 (15 bytes); higher codes such as
+// the JIS keys International1 (0x87) and International3 (0x89) can only travel
+// in the six slots of the byte report, so the whole NKRO bitmap is scanned.
 static void uart_auto_nkey_send(uint8_t *now_bit_report, uint8_t size) {
-    static uint8_t bytekb_report_buf[8] = {0};
-    static uint8_t bitkb_report_buf[16] = {0};
-    static uint8_t pre_bit_report[16]   = {0};
+    static uint8_t bytekb_report_buf[8]                   = {0};
+    static uint8_t bitkb_report_buf[16]                   = {0};
+    static uint8_t pre_bit_report[1 + NKRO_REPORT_BITS]   = {0};
 
     uint8_t i, j, byte_index;
     uint8_t change_mask, offset_mask;
@@ -94,7 +97,7 @@ static void uart_auto_nkey_send(uint8_t *now_bit_report, uint8_t size) {
                             break;
                         }
                     }
-                    if (byte_index >= 8) {
+                    if (byte_index >= 8 && i < sizeof(bitkb_report_buf)) {
                         bitkb_report_buf[i] |= offset_mask;
                         f_bit_send = 1;
                     }
@@ -106,7 +109,7 @@ static void uart_auto_nkey_send(uint8_t *now_bit_report, uint8_t size) {
                             break;
                         }
                     }
-                    if (byte_index >= 8) {
+                    if (byte_index >= 8 && i < sizeof(bitkb_report_buf)) {
                         bitkb_report_buf[i] &= ~offset_mask;
                         f_bit_send = 1;
                     }
@@ -116,7 +119,7 @@ static void uart_auto_nkey_send(uint8_t *now_bit_report, uint8_t size) {
             offset_mask <<= 1;
         }
     }
-    memcpy(pre_bit_report, now_bit_report, 16);
+    memcpy(pre_bit_report, now_bit_report, size);
 
     if (f_byte_send) {
         report_buffer_t rpt_byte = make_report_buffer(CMD_RPT_BYTE_KB, &bytekb_report_buf[0], 8);
@@ -145,7 +148,7 @@ static void rf_send_keyboard(report_keyboard_t *report) {
 
 static void rf_send_nkro(report_nkro_t *report) {
     clear_report_buffer();
-    uart_auto_nkey_send(&nkro_report->mods, 16); // only need 1 byte mod + 15 byte keys
+    uart_auto_nkey_send(&nkro_report->mods, 1 + NKRO_REPORT_BITS); // mods + the whole bitmap
 }
 
 static void rf_send_mouse(report_mouse_t *report) {

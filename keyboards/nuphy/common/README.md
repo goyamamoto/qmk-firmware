@@ -6,6 +6,7 @@
 
 The common layer is currently used by:
 
+- `nuphy/air60v2/ansi`
 - `nuphy/air75v2/ansi`
 - `nuphy/gem80`
 - `nuphy/halo75v2/ansi`
@@ -19,7 +20,7 @@ The common layer is grouped by subsystem:
 
 - `common/*.h`: the supported shared include surface for board code
 - `config/`: shared config structs, defaults, EEPROM storage, and VIA helpers
-- `core/`: keyboard flow, key processing, and debounce internals
+- `core/`: keyboard flow, key processing, debounce internals, and the US-JIS substitution (`usjis.c`: type a US keyboard as printed on a host set to the Japanese layout; `USJIS_TOG`, VIA `id_usjis_toggle`)
 - `lighting/`: shared lighting-facing headers and the WS2812 side driver
 - `power/`: sleep support and shared MCU power implementation
 - `system/`: housekeeping timer helpers
@@ -60,6 +61,17 @@ The shared layer is intentionally directional:
 - `system` depends on `wireless` for shared runtime counters
 - `wireless` owns RF transport details and exposes a smaller high-level API through `common/wireless.h`
 - boards should prefer `common/*.h` and avoid depending on subsystem-internal headers directly
+
+## Optional Board Hooks
+
+Defaults keep existing boards unchanged; a board opts in from its `config.h` or a board-local source file.
+
+| Hook | Default | Purpose |
+|---|---|---|
+| `set_notice_on_side(r, g, b)` (weak) | calls `set_indicator_on_side()` | where the OS-switch, sleep-toggle and US-JIS notices blink; the Air60 V2 sends them to its right strip |
+| `CAPS_LOCK_ROW`, `CAPS_LOCK_COL` | `3`, `0` | matrix position of Caps Lock for the under-key indicator, for keymaps that move it |
+| `NUPHY_TENS_DIGIT_ROW` | `0` | row that shows the tens digit of two-digit values; boards without an F-row use another row |
+| `USJIS_TOG`, `USJIS_ON`, `USJIS_OFF`, VIA `id_usjis_toggle` | not placed | US-JIS substitution (`core/usjis.c`); stored in `keyboard_config.common.usjis_enabled` |
 
 ## Notes
 

@@ -53,6 +53,9 @@ enum custom_keycodes {
     TOG_BAT_IND_NUM,
     FW_VERSION,
     TOG_POWER_ON_ANIMATION,
+    USJIS_TOG, // US layout on a JIS host, see usjis.c
+    USJIS_ON,
+    USJIS_OFF,
 };
 
 #define MAC_PRT G(S(KC_3))

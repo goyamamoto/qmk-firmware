@@ -10,6 +10,7 @@ Where possible, links have been updated to point at files in this repository or 
 ## Related Files
 
 - [Nuphy directory overview](./README.md)
+- [Air60 V2 ANSI VIA JSON](./air60v2/ansi/keymaps/default/NuPhy%20Air60%20V2%20via3.json)
 - [Air75 V2 ANSI VIA JSON](./air75v2/ansi/keymaps/default/NuPhy%20Air75%20V2%20via3.json)
 - [Gem80 ANSI VIA JSON](./gem80/ansi/keymaps/default/NuPhy%20Gem80%20via3.json)
 - [Gem80 ISO VIA JSON](./gem80/iso/keymaps/default/NuPhy%20Gem80%20ISO%20via3.json)

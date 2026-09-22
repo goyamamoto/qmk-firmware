@@ -176,6 +176,7 @@ typedef struct {
     uint8_t sleep_toggle : 1;
     uint8_t usb_sleep_toggle : 1;
     uint8_t deep_sleep_toggle : 1;
+    uint8_t usjis_enabled : 1; // US-JIS substitution (usjis.c)
     uint8_t debounce_press_ms;
     uint8_t debounce_release_ms;
     uint8_t sleep_timeout;
@@ -233,6 +234,7 @@ enum via_common_ids {
     id_sleep_toggle        = 5,
     id_deep_sleep_toggle   = 6,
     id_power_on_animation  = 7,
+    id_usjis_toggle        = 8,
 };
 
 enum via_custom_ids { id_battery_indicator_brightness = 31, id_toggle_custom_keys_highlight = 32, id_toggle_detect_numlock_state = 33, id_battery_indicator_numeric = 34 };

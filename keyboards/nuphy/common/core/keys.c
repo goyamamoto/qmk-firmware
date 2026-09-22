@@ -9,6 +9,7 @@
 #include "wait.h"
 #include "../side.h"
 #include "../ambient.h"
+#include "usjis.h"
 
 extern uint8_t         f_dev_reset_press;
 extern uint8_t         f_sleep_show;
@@ -41,6 +42,8 @@ bool pre_process_record_kb(uint16_t keycode, keyrecord_t *record) {
 bool process_record_nuphy(uint16_t keycode, keyrecord_t *record) {
     no_act_time     = 0;
     rf_linking_time = 0;
+
+    if (!usjis_process_record(keycode, record)) return false;
 
     switch (keycode) {
 #if (WORK_MODE == THREE_MODE)
@@ -377,6 +380,11 @@ bool process_record_nuphy(uint16_t keycode, keyrecord_t *record) {
     return true;
 }
 
+void post_process_record_kb(uint16_t keycode, keyrecord_t *record) {
+    usjis_post_process_record(keycode, record);
+    post_process_record_user(keycode, record);
+}
+
 /**
  * @brief  Release all keys, clear keyboard report.
  */
@@ -403,4 +411,5 @@ void break_all_key(void) {
 
     void clear_report_buffer(void);
     clear_report_buffer();
+    usjis_clear();
 }

@@ -1,5 +1,6 @@
 #include <quantum.h>
 #include "config.h"
+#include "../core/usjis.h"
 
 #ifdef VIA_ENABLE
 void via_init_kb(void) {
@@ -33,6 +34,9 @@ __attribute__((weak)) void via_config_set_value(uint8_t *data) {
             break;
         case id_sleep_toggle:
             keyboard_config.common.sleep_toggle = *value_data;
+            break;
+        case id_usjis_toggle:
+            usjis_request(*value_data);
             break;
 
         case id_side_light_mode:
@@ -110,6 +114,9 @@ __attribute__((weak)) void via_config_get_value(uint8_t *data) {
             break;
         case id_sleep_toggle:
             *value_data = keyboard_config.common.sleep_toggle;
+            break;
+        case id_usjis_toggle:
+            *value_data = usjis_is_enabled();
             break;
 
         case id_side_light_mode:

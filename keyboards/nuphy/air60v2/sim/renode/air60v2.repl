@@ -1,0 +1,86 @@
+// NuPhy Air60 V2 (STM32F072CB) for Renode.
+// Based on Renode's stm32f072.repl, with:
+//  - rcc replaced by a Python model whose ready bits follow the enable bits
+//    (the stock STM32F0_RCC lacks LSI/HSI48 ready flags, so ChibiOS spins)
+//  - register-file backing for FLASH, PWR, SYSCFG, CRS, USB, DBGMCU so that
+//    write-then-poll init sequences terminate (no behaviour is modelled)
+using "@RENODE_DIR@/stm32f0_base.repl"
+
+flash: Memory.MappedMemory @ sysbus 0x08000000
+    size: 0x20000
+
+sram: Memory.MappedMemory @ sysbus 0x20000000
+    size: 0x4000
+
+crc:
+    configurablePoly: true
+
+rcc: Python.PythonPeripheral @ sysbus 0x40021000
+    size: 0x400
+    initable: true
+    filename: "@RENODE_DIR@/rcc.py"
+
+flashIf: Python.PythonPeripheral @ sysbus 0x40022000
+    size: 0x400
+    initable: true
+    filename: "@RENODE_DIR@/regfile.py"
+
+pwr: Python.PythonPeripheral @ sysbus 0x40007000
+    size: 0x400
+    initable: true
+    filename: "@RENODE_DIR@/regfile.py"
+
+syscfg: Python.PythonPeripheral @ sysbus 0x40010000
+    size: 0x400
+    initable: true
+    filename: "@RENODE_DIR@/regfile.py"
+
+crs: Python.PythonPeripheral @ sysbus 0x40006C00
+    size: 0x400
+    initable: true
+    filename: "@RENODE_DIR@/regfile.py"
+
+usb: Python.PythonPeripheral @ sysbus 0x40005C00
+    size: 0x400
+    initable: true
+    filename: "@RENODE_DIR@/regfile.py"
+
+usbSram: Memory.MappedMemory @ sysbus 0x40006000
+    size: 0x400
+
+dbgmcu: Python.PythonPeripheral @ sysbus 0x40015800
+    size: 0x400
+    initable: true
+    filename: "@RENODE_DIR@/regfile.py"
+
+// I2C1 event and error interrupts share IRQ 23 on the F072; the base file
+// leaves the I2C interrupt unconnected.
+i2cIrq23: Miscellaneous.CombinedInput @ none
+    numberOfInputs: 2
+    -> nvic@23
+
+i2c1:
+    EventInterrupt -> i2cIrq23@0
+    ErrorInterrupt -> i2cIrq23@1
+
+// the firmware runs the core at 48 MHz (PLL from HSI/2 x12); SysTick counts HCLK
+nvic:
+    systickFrequency: 48000000
+
+// All timers are fed by the 48 MHz bus clocks on the F072; the base file
+// uses 10 MHz, which makes ChibiOS's TIM2 system tick (and wait_us on TIM14)
+// run 4.8 times slow.
+timer1:
+    frequency: 48000000
+timer2:
+    frequency: 48000000
+timer3:
+    frequency: 48000000
+timer14:
+    frequency: 48000000
+timer15:
+    frequency: 48000000
+timer16:
+    frequency: 48000000
+timer17:
+    frequency: 48000000

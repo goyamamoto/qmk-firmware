@@ -11,7 +11,8 @@ SRC += common/wireless/rf_driver.c  \
 	   common/system/housekeeping_timer.c  \
 	   common/power/sleep.c  \
 	   common/core/keyboard.c  \
-	   common/core/keys.c
+	   common/core/keys.c  \
+	   common/core/usjis.c
 
 
 LTO_ENABLE = no

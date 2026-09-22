@@ -76,6 +76,7 @@ __attribute__((weak)) void init_keyboard_config(void) {
     keyboard_config.common.debounce_release_ms = RELEASE_DEBOUNCE;
     keyboard_config.common.caps_indicator_type = DEFAULT_CAPS_INDICATOR_TYPE;
     keyboard_config.common.power_on_animation  = DEFAULT_POWER_ON_ANIMATION;
+    keyboard_config.common.usjis_enabled       = 0;
     // lights
     keyboard_config.lights.side_mode                = DEFAULT_SIDE_MODE;
     keyboard_config.lights.side_brightness          = DEFAULT_SIDE_BRIGHTNESS;
@@ -240,6 +241,10 @@ void led_power_handle(void) {
     }
 }
 
+#ifndef NUPHY_TENS_DIGIT_ROW
+#    define NUPHY_TENS_DIGIT_ROW 0
+#endif
+
 uint8_t get_led_index(uint8_t row, uint8_t col) {
     return g_led_config.matrix_co[row][col];
 }
@@ -254,7 +259,7 @@ uint8_t two_digit_decimals_led(uint8_t value) {
 
     uint8_t dec = value / 10;
 
-    uint8_t dec_led_idx = get_led_index(0, dec);
+    uint8_t dec_led_idx = get_led_index(NUPHY_TENS_DIGIT_ROW, dec);
 
     return dec_led_idx;
 }
