@@ -180,8 +180,10 @@ void uart_send_report_repeat(void) {
     if (dev_info.link_mode == LINK_USB) return;
 
     if (dev_info.rf_state != RF_CONNECT) {
-        // toss away queue after some time if disconnected to prevent sending random keys
-        if (no_act_time > 100) clear_report_buffer_and_queue(); // 1 second
+        // Keys typed while the link is down wait here for the reconnect (the wake
+        // key after deep sleep needs this); older ones are dropped rather than
+        // replayed long after they were typed.
+        if (no_act_time > 300) clear_report_buffer_and_queue(); // 3 seconds
         return;
     }
 

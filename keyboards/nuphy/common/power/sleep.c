@@ -30,6 +30,8 @@ extern uint32_t        no_act_time;
 extern bool            f_goto_sleep;
 extern bool            f_wakeup_prepare;
 
+void led_pwr_wake_pending_handle(void);
+
 void deep_sleep_handle(void) {
     // Sync again before sleeping. Without this, the wake keystroke is more likely to be lost.
     nuphy_rf_sync_status();
@@ -49,6 +51,9 @@ void sleep_handle(void) {
 #if (WORK_MODE == THREE_MODE)
     static uint32_t rf_disconnect_time = 0;
 #endif
+
+    // after a deep-sleep wake: one matrix scan has run by now, bring the LEDs back
+    led_pwr_wake_pending_handle();
 
     /* 50ms interval */
     if (timer_elapsed32(delay_step_timer) < 50) return;

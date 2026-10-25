@@ -114,6 +114,7 @@ static bool sleeping     = false;
 static bool rgb_led_on  = 0;
 static bool side_led_on = 0;
 static bool rgb_led_powered_off  = 0;
+static bool led_wake_pending     = false;
 static bool side_led_powered_off = 0;
 
 void rgb_matrix_update_pwm_buffers(void);
@@ -174,7 +175,9 @@ void enter_deep_sleep(void) {
     m_exti.EXTI_Line    = 0XFFFF;
     m_exti.EXTI_LineCmd = ENABLE;
     m_exti.EXTI_Mode    = EXTI_Mode_Interrupt;
-    m_exti.EXTI_Trigger = EXTI_Trigger_Falling;
+    // Both edges: the press that wakes the board is still held when the matrix
+    // scan resumes, so the wake key is reported instead of being lost.
+    m_exti.EXTI_Trigger = EXTI_Trigger_Rising_Falling;
     EXTI_Init(&m_exti);
 
     NVIC_InitTypeDef NVIC_InitStructure;
@@ -209,6 +212,9 @@ void enter_deep_sleep(void) {
 }
 
 void exit_deep_sleep(void) {
+    // Back to the full clock first: the waits and bus transfers below assume it.
+    stm32_clock_init();
+
     nuphy_matrix_wake_init();
 
 #if (WORK_MODE == THREE_MODE)
@@ -221,9 +227,10 @@ void exit_deep_sleep(void) {
     gpio_write_pin_high(NRF_WAKEUP_PIN);
 #endif
 
-    led_pwr_wake_handle();
-
-    stm32_clock_init();
+    // The LED drivers come back from housekeeping (led_pwr_wake_pending_handle),
+    // so the matrix is scanned once before that tens-of-ms re-init runs and the
+    // key that woke the board is caught while it is still held.
+    led_wake_pending = true;
 
     if (tim6_enabled) TIM_Cmd(TIM6, ENABLE);
 
@@ -288,6 +295,12 @@ void led_pwr_wake_handle(void) {
         pwr_side_led_on();
         side_rgb_refresh();
     }
+}
+
+void led_pwr_wake_pending_handle(void) {
+    if (!led_wake_pending) return;
+    led_wake_pending = false;
+    led_pwr_wake_handle();
 }
 
 void pwr_rgb_led_off(void) {
